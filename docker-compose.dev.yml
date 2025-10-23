@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  fpl-ai:
+    build:
+      context: .
+    container_name: fpl-ai
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app           # Mount local code into container
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
