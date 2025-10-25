@@ -1,197 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>FPL AI Optimized Team</title>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: linear-gradient(to bottom, #0a3d62, #000);
-      color: white;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<title>FPL AI Optimized Team</title>
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(to bottom, #0a3d62, #000);
+    color: white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
 
-    h1 {
-      margin-top: 20px;
-      font-size: 28px;
-    }
+  h1 {
+    margin-top: 20px;
+    font-size: 28px;
+  }
 
-    .summary {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 10px;
-      margin: 20px auto;
-      width: 80%;
-    }
+  .summary {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 10px;
+    margin: 20px auto;
+    width: 80%;
+  }
 
-    .pitch {
-      position: relative;
-      background: radial-gradient(#0b6623 40%, #064420);
-      border: 3px solid #fff;
-      border-radius: 10px;
-      width: 80%;
-      margin: 20px auto;
-      padding: 40px 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
+  .pitch {
+    position: relative;
+    background: radial-gradient(#0b6623 40%, #064420);
+    border: 3px solid #fff;
+    border-radius: 10px;
+    width: 80%;
+    margin: 20px auto;
+    padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 
-    .row {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: 20px 0;
-    }
+  .row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+  }
 
-    .player {
-      width: 90px;
-      height: 90px;
-      background: rgba(255, 255, 255, 0.15);
-      border: 2px solid #fff;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-size: 12px;
-      position: relative;
-    }
+  .player {
+    width: 90px;
+    height: 90px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    position: relative;
+  }
 
-    .player span {
-      font-weight: bold;
-    }
+  .player span {
+    font-weight: bold;
+  }
 
-    .captain::after {
-      content: "C";
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: gold;
-      color: black;
-      font-weight: bold;
-      border-radius: 50%;
-      padding: 3px 6px;
-      font-size: 10px;
-    }
+  .captain::after {
+    content: "C";
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: gold;
+    color: black;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 3px 6px;
+    font-size: 10px;
+  }
 
-    .vice::after {
-      content: "VC";
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: silver;
-      color: black;
-      font-weight: bold;
-      border-radius: 50%;
-      padding: 3px 6px;
-      font-size: 10px;
-    }
+  .vice::after {
+    content: "VC";
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: silver;
+    color: black;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 3px 6px;
+    font-size: 10px;
+  }
 
-    .bench {
-      margin-top: 30px;
-      background: rgba(255,255,255,0.1);
-      padding: 15px;
-      border-radius: 10px;
-      width: 80%;
-      margin-left: auto;
-      margin-right: auto;
-    }
+  .bench {
+    margin-top: 30px;
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 10px;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
 
-    .bench h2 {
-      margin-top: 0;
-    }
+  .bench h2 {
+    margin-top: 0;
+  }
 
-    .bench-row {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
+  .bench-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
 
-    .footer {
-      margin-top: 30px;
-      font-size: 14px;
-      opacity: 0.8;
-    }
-  </style>
+  .footer {
+    margin-top: 30px;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+</style>
 </head>
 <body>
-  <h1>FPL AI Optimized Team</h1>
-  <div class="summary" id="summary">
-    <p>Loading team data...</p>
-  </div>
-  <div class="pitch" id="pitch"></div>
-  <div class="bench" id="bench"></div>
-  <div class="footer">⚽ Powered by FPL-AI Optimizer</div>
+<h1>FPL AI Optimized Team</h1>
 
-  <script>
-    async function loadTeam() {
-      const res = await fetch('/team');
-      const data = await res.json();
+<div class="summary" id="summary">
+  <p>Loading team data...</p>
+</div>
 
-      const pitch = document.getElementById('pitch');
-      const benchDiv = document.getElementById('bench');
-      const summaryDiv = document.getElementById('summary');
+<div class="pitch" id="pitch"></div>
 
-      const xi = data.starting_xi;
-      const bench = data.bench;
-      const formation = data.starting_formation;
+<div class="bench" id="bench"></div>
 
-      const captain = data.captain ? data.captain.name : "N/A";
-      const vice = data.vice_captain ? data.vice_captain.name : "N/A";
+<div class="footer">⚽ Powered by FPL-AI Optimizer</div>
 
-      summaryDiv.innerHTML = `
-        <h2>Formation: ${formation.DEF}-${formation.MID}-${formation.FWD}</h2>
-        <p>Total Cost: £${data.total_team_cost.toFixed(1)}M | 
-        Expected Points (XI): ${data.starting_xi_points.toFixed(1)}</p>
-        <p>Captain: <b>${captain}</b> | Vice Captain: <b>${vice}</b></p>
-      `;
+<script>
+async function loadTeam() {
+  try {
+    const res = await fetch('/team');
+    const data = await res.json();
 
-      // Pitch Layout
-      function makeRow(players, role) {
-        const row = document.createElement('div');
-        row.classList.add('row');
-        players.forEach(p => {
-          const div = document.createElement('div');
-          div.classList.add('player');
-          if (data.captain && p.name === data.captain.name) div.classList.add('captain');
-          if (data.vice_captain && p.name === data.vice_captain.name) div.classList.add('vice');
-          div.innerHTML = `
-            <span>${p.name.split(" ").slice(-1)}</span>
-            <small>${p.team}</small>
-            <small>${p.expected_points} pts</small>
-          `;
-          row.appendChild(div);
-        });
-        return row;
-      }
+    const pitch = document.getElementById('pitch');
+    const benchDiv = document.getElementById('bench');
+    const summaryDiv = document.getElementById('summary');
 
-      pitch.innerHTML = '';
-      pitch.appendChild(makeRow(xi.GK || []));
-      pitch.appendChild(makeRow(xi.DEF || []));
-      pitch.appendChild(makeRow(xi.MID || []));
-      pitch.appendChild(makeRow(xi.FWD || []));
+    const xi = data.starting_xi;
+    const bench = data.bench;
+    const formation = data.starting_formation;
+    const captain = data.captain ? data.captain.name : null;
+    const vice = data.vice_captain ? data.vice_captain.name : null;
 
-      // Bench
-      benchDiv.innerHTML = `
-        <h2>Bench</h2>
-        <div class="bench-row">
-          ${(bench.GK || []).concat(bench.DEF || [], bench.MID || [], bench.FWD || [])
-            .map(p => `
-              <div class="player">
-                <span>${p.name.split(" ").slice(-1)}</span>
-                <small>${p.team}</small>
-                <small>${p.expected_points} pts</small>
-              </div>
-            `).join('')}
-        </div>
-      `;
+    summaryDiv.innerHTML = `
+      <h2>Formation: ${formation.DEF}-${formation.MID}-${formation.FWD}</h2>
+      <p>Total Cost: £${data.total_team_cost.toFixed(1)}M | 
+      Expected Points (XI): ${data.starting_xi_points.toFixed(1)}</p>
+      <p>Captain: <b>${captain || "N/A"}</b> | Vice Captain: <b>${vice || "N/A"}</b></p>
+    `;
+
+    // Function to create a row of players
+    function makeRow(players) {
+      const row = document.createElement('div');
+      row.classList.add('row');
+      players.forEach(p => {
+        const div = document.createElement('div');
+        div.classList.add('player');
+        if(captain && p.name === captain) div.classList.add('captain');
+        if(vice && p.name === vice) div.classList.add('vice');
+        div.innerHTML = `
+          <span>${p.name.split(" ").slice(-1)}</span>
+          <small>${p.team}</small>
+          <small>${p.expected_points} pts</small>
+        `;
+        row.appendChild(div);
+      });
+      return row;
     }
 
-    loadTeam();
-  </script>
+    pitch.innerHTML = '';
+    pitch.appendChild(makeRow(xi.GK || []));
+    pitch.appendChild(makeRow(xi.DEF || []));
+    pitch.appendChild(makeRow(xi.MID || []));
+    pitch.appendChild(makeRow(xi.FWD || []));
+
+    // Bench
+    benchDiv.innerHTML = `
+      <h2>Bench</h2>
+      <div class="bench-row">
+        ${(bench.GK || []).concat(bench.DEF || [], bench.MID || [], bench.FWD || [])
+          .map(p => `
+            <div class="player">
+              <span>${p.name.split(" ").slice(-1)}</span>
+              <small>${p.team}</small>
+              <small>${p.expected_points} pts</small>
+            </div>
+          `).join('')}
+      </div>
+    `;
+  } catch(err) {
+    document.getElementById('summary').textContent = 'Error loading team: ' + err.message;
+  }
+}
+
+// Auto-refresh every 30 seconds
+setInterval(loadTeam, 30000);
+loadTeam();
+</script>
 </body>
 </html>

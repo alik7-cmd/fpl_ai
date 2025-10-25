@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FPL AI Dashboard</title>
+<style>
+/* Base styles */
+body { font-family: "Segoe UI", sans-serif; background: #0a3d62; color: white; margin: 0; padding: 20px; }
+h1 { text-align: center; }
+.buttons { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; background: #1e3799; color: white; }
+button:hover { background: #3c40c6; }
+#output { white-space: pre-wrap; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px; max-height: 200px; overflow-y: auto; }
+
+/* Modal styles */
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background: rgba(0,0,0,0.7); }
+.modal-content { background: #0a3d62; margin: 10% auto; padding: 20px; border-radius: 10px; width: 320px; text-align: center; }
+.modal-content label, .modal-content input, .modal-content select { display: block; width: 100%; margin: 10px 0; padding: 5px; border-radius: 5px; border: none; }
+.modal-content button { margin-top: 10px; }
+
+/* Player picker list */
+.player-list { max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.1); border-radius: 5px; margin-top: 5px; }
+.player-item { display: flex; align-items: center; padding: 5px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.2); }
+.player-item img { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; }
+.player-item:hover { background: rgba(255,255,255,0.2); }
+.player-item.selected { background: rgba(255,255,0,0.3); }
+
+iframe { width: 100%; height: 600px; border: 2px solid white; border-radius: 10px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<h1>FPL AI Dashboard</h1>
+
+<div class="buttons">
+  <button onclick="openTopPlayersModal()">Top Players</button>
+  <button onclick="openPlayerImpactModal()">Player Impact</button>
+  <button onclick="openPerformanceModal()">Performance Trends</button>
+  <button onclick="trainML()">Train ML Model</button>
+  <button onclick="optimizeTeam()">Optimize Team</button>
+  <button onclick="showTeamRisk()">Team Risk</button>
+  <button onclick="showTeamImpactSummary()">Team Impact Summary</button>
+</div>
+
+<div id="output">Output will appear here...</div>
+
+<h2>Team Visualizer</h2>
+<iframe id="team-frame" src="team.html"></iframe>
+
+<!-- Top Players Modal -->
+<div id="topPlayersModal" class="modal">
+  <div class="modal-content">
+    <h3>Top Players</h3>
+    <label>Position</label>
+    <select id="top-position">
+      <option value="">All</option>
+      <option value="GK">GK</option>
+      <option value="DEF">DEF</option>
+      <option value="MID">MID</option>
+      <option value="FWD">FWD</option>
+    </select>
+    <label>Number of players</label>
+    <input type="number" id="top-number" value="5" min="1" max="20">
+    <button onclick="submitTopPlayers()">Submit</button>
+    <button onclick="closeTopPlayersModal()">Close</button>
+  </div>
+</div>
+
+<!-- Player Impact Modal -->
+<div id="playerImpactModal" class="modal">
+  <div class="modal-content">
+    <h3>Select Player</h3>
+    <input type="text" id="impact-search" placeholder="Search player...">
+    <div class="player-list" id="impact-player-list">Loading players...</div>
+    <button onclick="closePlayerImpactModal()">Close</button>
+  </div>
+</div>
+
+<!-- Performance Trends Modal -->
+<div id="performanceModal" class="modal">
+  <div class="modal-content">
+    <h3>Performance Trends</h3>
+    <input type="text" id="performance-search" placeholder="Search player...">
+    <div class="player-list" id="performance-player-list">Loading players...</div>
+    <label for="n-gameweeks">Number of Gameweeks</label>
+    <input type="number" id="n-gameweeks" value="5" min="1" max="38">
+    <button onclick="submitPerformanceTrends()">Submit</button>
+    <button onclick="closePerformanceModal()">Close</button>
+  </div>
+</div>
+
+<script>
+let playersData = [];
+let selectedPlayerId = null;
+let selectedPerformancePlayerId = null;
+
+// Fetch all players once
+async function fetchPlayers() {
+  if(playersData.length) return;
+  try {
+    const res = await fetch('/top?n=100');
+    const data = await res.json();
+    playersData = [];
+    ['GK','DEF','MID','FWD'].forEach(pos => {
+      if(data.top_players[pos]){
+        data.top_players[pos].forEach(p => playersData.push({...p, id: p.id}));
+      }
+    });
+  } catch(err) { console.error(err); }
+}
+fetchPlayers();
+
+// ---------------- Top Players Modal ----------------
+function openTopPlayersModal() { document.getElementById('topPlayersModal').style.display='block'; }
+function closeTopPlayersModal() { document.getElementById('topPlayersModal').style.display='none'; }
+async function submitTopPlayers() {
+  const pos = document.getElementById('top-position').value;
+  const n = document.getElementById('top-number').value || 5;
+  closeTopPlayersModal();
+  const url = pos ? `/top?n=${n}&position=${pos}` : `/top?n=${n}`;
+  await callAPI(url, 'GET', {}, 'Top players fetched');
+}
+
+// ---------------- Player Impact Modal ----------------
+function openPlayerImpactModal(){ 
+  document.getElementById('playerImpactModal').style.display='block'; 
+  renderImpactPlayerList(playersData); 
+}
+function closePlayerImpactModal(){ document.getElementById('playerImpactModal').style.display='none'; }
+
+function renderImpactPlayerList(players){
+  const container = document.getElementById('impact-player-list');
+  const query = document.getElementById('impact-search').value.toLowerCase();
+  const filtered = players.filter(p => p.name.toLowerCase().includes(query));
+  container.innerHTML = filtered.map(p => `
+    <div class="player-item" onclick="selectImpactPlayer(${p.id})">
+      <img src="${p.image}" alt="${p.name}">
+      <div>
+        <strong>${p.name}</strong><br>
+        <small>${p.team} | ${p.position}</small>
+      </div>
+    </div>
+  `).join('');
+}
+document.getElementById('impact-search').addEventListener('input', ()=>renderImpactPlayerList(playersData));
+
+async function selectImpactPlayer(id){
+  selectedPlayerId = id;
+  const player = playersData.find(p=>p.id===id);
+  await callAPI(`/player/impact?player_id=${id}`, 'GET', {}, `Impact for ${player.name}`);
+  closePlayerImpactModal();
+}
+
+// ---------------- Performance Trends Modal ----------------
+function openPerformanceModal(){ 
+  document.getElementById('performanceModal').style.display='block';
+  renderPerformancePlayerList(playersData);
+}
+function closePerformanceModal(){ document.getElementById('performanceModal').style.display='none'; }
+
+function renderPerformancePlayerList(players){
+  const container = document.getElementById('performance-player-list');
+  const query = document.getElementById('performance-search').value.toLowerCase();
+  const filtered = players.filter(p => p.name.toLowerCase().includes(query));
+  container.innerHTML = filtered.map(p => `
+    <div class="player-item" onclick="selectPerformancePlayer(${p.id})">
+      <img src="${p.image}" alt="${p.name}">
+      <div>
+        <strong>${p.name}</strong><br>
+        <small>${p.team} | ${p.position}</small>
+      </div>
+    </div>
+  `).join('');
+}
+document.getElementById('performance-search').addEventListener('input', ()=>renderPerformancePlayerList(playersData));
+
+function selectPerformancePlayer(id){
+  selectedPerformancePlayerId = id;
+  const items = document.querySelectorAll('#performance-player-list .player-item');
+  items.forEach(item=>{
+    item.classList.remove('selected');
+    if(item.innerHTML.includes(`selectPerformancePlayer(${id})`)) item.classList.add('selected');
+  });
+}
+async function submitPerformanceTrends(){
+  const n = parseInt(document.getElementById('n-gameweeks').value,10) || 5;
+  if(!selectedPerformancePlayerId) return alert('Select a player first!');
+  await callAPI(`/player/performance-trends?player_id=${selectedPerformancePlayerId}&n_gameweeks=${n}`, 'GET', {}, 'Performance Trends');
+  closePerformanceModal();
+}
+
+// ---------------- Generic API Call ----------------
+async function callAPI(url, method='GET', body=null, successMessage='Success') {
+  const output = document.getElementById('output');
+  output.textContent = 'Loading...';
+  try {
+    const options = { method };
+    if(body && method==='POST') options.body = JSON.stringify(body);
+    const res = await fetch(url, options);
+    const data = await res.json();
+    output.textContent = JSON.stringify(data, null, 2);
+    // refresh team iframe if needed
+    if(['/team','/top'].includes(url.split('?')[0])) {
+      const iframe = document.getElementById('team-frame');
+      iframe.src = iframe.src.split('?')[0] + '?t=' + Date.now();
+    }
+  } catch(err) { output.textContent = 'Error: '+err.message; }
+}
+
+// ---------------- Other buttons ----------------
+async function trainML(){ await callAPI('/ml/models'); }
+async function optimizeTeam(){ await callAPI('/team'); }
+async function showTeamRisk(){
+  const ids = prompt('Enter comma-separated player IDs:');
+  if(ids) await callAPI(`/team/risk?team_ids=${ids}`);
+}
+async function showTeamImpactSummary(){
+  const ids = prompt('Enter comma-separated player IDs:');
+  if(ids) await callAPI(`/team/impact-summary?team_ids=${ids}`);
+}
+</script>
+</body>
+</html>
