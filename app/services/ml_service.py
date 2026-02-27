@@ -109,9 +109,9 @@ class MLService:
 
     # ------------------ Prediction ------------------ #
     @staticmethod
-    def predict_points(player, fdr_map, models):
+    def predict_points(player, fdr_map, models, current_gw=None):
         chance = player.get("chance_of_playing_next_round", 100) or 100
-        if chance < 50:
+        if chance < 75:
             return 0.0
 
         pos_map = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
@@ -142,15 +142,20 @@ class MLService:
         # Adjust for availability
         pred *= row["availability"]
 
-        # Discipline penalty
-        discipline_penalty = 1 - 0.1 * row.get("yellow_cards", 0) - 0.3 * row.get("red_cards", 0)
-        pred *= max(discipline_penalty, 0)
+        # Discipline penalty (mild — only recent cards matter)
+        discipline_penalty = 1 - 0.02 * row.get("yellow_cards", 0) - 0.1 * row.get("red_cards", 0)
+        pred *= max(discipline_penalty, 0.5)
 
-        # Extra points for MID/FWD
+        # Extra points for MID/FWD with set-piece duties
         if pos in ["MID", "FWD"]:
-            pred += 0.2 * row.get("penalty_taker", 0) + 0.1 * row.get("set_piece_taker", 0)
+            pred += 0.5 * row.get("penalty_taker", 0) + 0.3 * row.get("set_piece_taker", 0)
 
-        # Scale by minutes played
-        pred *= min(float(player.get("minutes", 0)) / 90, 1)
+        # Scale by minutes played fraction (how regularly they play)
+        # Use current gameweek to calculate max possible minutes
+        gw = current_gw if current_gw else 28
+        max_possible_minutes = gw * 90
+        minutes_fraction = min(float(player.get("minutes", 0)) / max_possible_minutes, 1.0)
+        # Apply a sqrt so partial starters still get reasonable predictions
+        pred *= max(np.sqrt(minutes_fraction), 0.1)
 
-        return round(pred, 2)
+        return round(max(pred, 0), 2)

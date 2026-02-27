@@ -47,7 +47,7 @@ def top_players(
         p["red_cards"] = p.get("red_cards", 0)
         p["availability"] = (p.get("chance_of_playing_next_round", 100) or 100) / 100
 
-        ep = MLService.predict_points(p, fdr_map, models)
+        ep = MLService.predict_points(p, fdr_map, models, gw)
         if ep <= 0:
             continue
 
@@ -93,6 +93,20 @@ def build_team():
         pos_map = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
         pos = pos_map.get(p.get("element_type"), "UNK")
 
+        # Skip injured, suspended, unavailable, or loan players
+        status = p.get("status", "a")
+        if status in ("i", "s", "u", "n"):  # injured / suspended / unavailable / not in squad
+            continue
+
+        # Skip players with low availability chance
+        chance = p.get("chance_of_playing_next_round", 100)
+        if chance is not None and chance < 75:
+            continue
+
+        # Skip players with negligible minutes (< 90 total = barely played)
+        if p.get("minutes", 0) < 90:
+            continue
+
         # Only MID/FWD get penalty/set-piece
         if pos in ["MID", "FWD"]:
             p["penalty_taker"] = 1 if p.get("penalties_order") else 0
@@ -107,7 +121,7 @@ def build_team():
         p["red_cards"] = p.get("red_cards", 0)
         p["availability"] = (p.get("chance_of_playing_next_round", 100) or 100) / 100
 
-        ep = MLService.predict_points(p, fdr_map, models)
+        ep = MLService.predict_points(p, fdr_map, models, gw)
         if ep <= 0:
             continue
 
@@ -174,7 +188,7 @@ def player_impact(player_id: int):
     player["red_cards"] = player.get("red_cards", 0)
     player["availability"] = (player.get("chance_of_playing_next_round", 100) or 100) / 100
 
-    predicted_points = MLService.predict_points(player, fdr_map, models)
+    predicted_points = MLService.predict_points(player, fdr_map, models, gw)
     pos_name = pos_map.get(player.get("element_type"), "UNK")
     model_name = models[pos_name][2] if pos_name in models else "Unknown"
 
@@ -215,7 +229,7 @@ def player_performance_trends(player_id: int, n_gameweeks: int = 5):
         trends.append({
             "gw": gw-i,
             "actual_points": max(0, player.get("total_points",0)//(i+1)),
-            "predicted_points": round(MLService.predict_points(player, fdr_map, models),2)
+            "predicted_points": round(MLService.predict_points(player, fdr_map, models, gw),2)
         })
     return {
         "player": f"{player['first_name']} {player['second_name']}",
@@ -283,7 +297,7 @@ def team_impact_summary(team_ids: str = Query(..., description="Comma-separated 
         p["red_cards"] = p.get("red_cards",0)
         p["availability"] = (p.get("chance_of_playing_next_round",100) or 100)/100
 
-        ep = MLService.predict_points(p, fdr_map, models)
+        ep = MLService.predict_points(p, fdr_map, models, gw)
         total_points += ep
 
         summary["goals"] += p.get("goals_scored",0)
