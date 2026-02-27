@@ -4,6 +4,13 @@ from fastapi.responses import JSONResponse
 from typing import Optional, List
 
 from app.core.config import POSITIONS, BASE_IMAGE_URL
+
+def _player_image_url(photo: str) -> str:
+    """Convert FPL photo field (e.g. '223094.jpg') to actual image URL ('p223094.png')."""
+    if not photo:
+        return ""
+    return BASE_IMAGE_URL + "p" + photo.replace(".jpg", ".png")
+
 from app.services.data_service import FPLDataService
 from app.services.ml_service import MLService
 from app.services.optimizer_service import OptimizerService
@@ -64,7 +71,7 @@ def top_players(
             "yellow_cards": p["yellow_cards"],
             "red_cards": p["red_cards"],
             "availability": p["availability"],
-            "image": BASE_IMAGE_URL + p.get("photo", "")
+            "image": _player_image_url(p.get("photo", ""))
         })
 
     positions_to_return = [position] if position else valid_positions
@@ -142,8 +149,8 @@ def build_team():
             "yellow_cards": p["yellow_cards"],
             "red_cards": p["red_cards"],
             "availability": p["availability"],
-            "model_used": model_name
-           
+            "model_used": model_name,
+            "image": _player_image_url(p.get("photo", ""))
         })
 
     optimizer = OptimizerService()
@@ -208,7 +215,8 @@ def player_impact(player_id: int):
         "position": POSITIONS.get(player["element_type"], "UNK"),
         "expected_points": predicted_points,
         "feature_impact": feature_impact,
-        "model_used": model_name
+        "model_used": model_name,
+        "image": _player_image_url(player.get("photo", ""))
     }
 
 @app.get("/player/performance-trends")

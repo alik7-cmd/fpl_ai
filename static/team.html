@@ -47,17 +47,26 @@
     }
 
     .player {
-      width: 90px;
-      height: 90px;
+      width: 110px;
       background: rgba(255, 255, 255, 0.15);
       border: 2px solid #fff;
-      border-radius: 50%;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       font-size: 12px;
       position: relative;
+      padding: 8px 4px;
+    }
+
+    .player img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 4px;
+      background: rgba(255,255,255,0.2);
     }
 
     .player span {
@@ -160,7 +169,8 @@
           if (data.captain && p.name === data.captain.name) div.classList.add('captain');
           if (data.vice_captain && p.name === data.vice_captain.name) div.classList.add('vice');
           div.innerHTML = `
-            <span>${p.name.split(" ").slice(-1)}</span>
+            <img src="${p.image || ''}" alt="${p.name}" onerror="this.style.display='none'">
+            <span>${p.name.split(' ').slice(-1)}</span>
             <small>${p.team}</small>
             <small>${p.expected_points} pts</small>
           `;
@@ -182,7 +192,8 @@
           ${(bench.GK || []).concat(bench.DEF || [], bench.MID || [], bench.FWD || [])
             .map(p => `
               <div class="player">
-                <span>${p.name.split(" ").slice(-1)}</span>
+                <img src="${p.image || ''}" alt="${p.name}" onerror="this.style.display='none'">
+                <span>${p.name.split(' ').slice(-1)}</span>
                 <small>${p.team}</small>
                 <small>${p.expected_points} pts</small>
               </div>
