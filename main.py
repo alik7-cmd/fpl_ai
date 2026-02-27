@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from typing import Optional, List
 
 from app.core.config import POSITIONS, BASE_IMAGE_URL
@@ -297,3 +298,19 @@ def team_impact_summary(team_ids: str = Query(..., description="Comma-separated 
         "total_predicted_points": round(total_points,2),
         "feature_impact_summary": summary
     }
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.post("/chat")
+async def chat_endpoint(request: Request):
+    data = await request.json()
+    user_message = data.get("message", "")
+    # Simple logic, replace with your own agent logic if needed
+    if "top" in user_message.lower():
+        reply = "You can see top players at /top or ask for a position like 'Show me top MID'."
+    elif "team" in user_message.lower():
+        reply = "You can get an optimized team at /team."
+    else:
+        reply = "Ask me about FPL teams, players, or stats!"
+    return JSONResponse({"reply": reply})

@@ -1,25 +1,35 @@
-from pulp import LpMaximize, LpProblem, LpVariable, lpSum, LpBinary
+from pulp import LpMaximize, LpProblem, LpVariable, lpSum, LpBinary, GLPK_CMD, PULP_CBC_CMD
+import re
 from app.core.config import TOTAL_BUDGET, VALID_FORMATIONS
 
 class OptimizerService:
     @staticmethod
+    def _sanitize_name(name, idx):
+        """Create a safe LP variable name."""
+        return f"player_{idx}"
+
+    @staticmethod
     def optimize_team(players):
         prob = LpProblem("FPL_Optimization", LpMaximize)
-        vars_ = {p["name"]: LpVariable(p["name"], cat=LpBinary) for p in players}
+        vars_ = {i: LpVariable(OptimizerService._sanitize_name(p["name"], i), cat=LpBinary) for i, p in enumerate(players)}
 
-        prob += lpSum(vars_[p["name"]] * p["expected_points"] for p in players)
-        prob += lpSum(vars_[p["name"]] * p["price"] for p in players) <= TOTAL_BUDGET
-        prob += lpSum(vars_[p["name"]] for p in players) == 15
+        prob += lpSum(vars_[i] * p["expected_points"] for i, p in enumerate(players))
+        prob += lpSum(vars_[i] * p["price"] for i, p in enumerate(players)) <= TOTAL_BUDGET
+        prob += lpSum(vars_[i] for i in range(len(players))) == 15
 
         pos_limits = {"GK": 2, "DEF": 5, "MID": 5, "FWD": 3}
         for pos, n in pos_limits.items():
-            prob += lpSum(vars_[p["name"]] for p in players if p["position"] == pos) == n
+            prob += lpSum(vars_[i] for i, p in enumerate(players) if p["position"] == pos) == n
 
         for team in set(p["team"] for p in players):
-            prob += lpSum(vars_[p["name"]] for p in players if p["team"] == team) <= 3
+            prob += lpSum(vars_[i] for i, p in enumerate(players) if p["team"] == team) <= 3
 
-        prob.solve()
-        return [p for p in players if vars_[p["name"]].varValue == 1]
+        # Try CBC first, fall back to GLPK if CBC isn't available
+        try:
+            prob.solve(PULP_CBC_CMD(msg=0))
+        except Exception:
+            prob.solve(GLPK_CMD(msg=0))
+        return [p for i, p in enumerate(players) if vars_[i].varValue == 1]
 
     @staticmethod
     def pick_xi(squad):
